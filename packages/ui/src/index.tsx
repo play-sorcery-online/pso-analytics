@@ -137,21 +137,14 @@ const QUICK_FILTERS = [
   { key: 'rarity', label: 'Rarity', options: ['Unique', 'Elite', 'Exceptional', 'Ordinary'] },
 ] as const
 type QuickFilterKey = typeof QUICK_FILTERS[number]['key']
-// Card types allow several selections; element and rarity stay single-choice.
-interface QuickFilterState { type: string[]; element: string; rarity: string }
-const EMPTY_QUICK_FILTERS: QuickFilterState = { type: [], element: '', rarity: '' }
-function quickFilterValues(filters: QuickFilterState, key: QuickFilterKey): string[] {
-  const value = filters[key]
-  return Array.isArray(value) ? value : value ? [value] : []
-}
+type QuickFilterState = Record<QuickFilterKey, string[]>
+const EMPTY_QUICK_FILTERS: QuickFilterState = { type: [], element: [], rarity: [] }
 function quickFilterSelected(filters: QuickFilterState, key: QuickFilterKey, option: string): boolean {
-  return quickFilterValues(filters, key).includes(option)
+  return filters[key].includes(option)
 }
 function toggleQuickFilter(filters: QuickFilterState, key: QuickFilterKey, option: string): QuickFilterState {
-  if (key === 'type') {
-    return { ...filters, type: filters.type.includes(option) ? filters.type.filter((value) => value !== option) : [...filters.type, option] }
-  }
-  return { ...filters, [key]: filters[key] === option ? '' : option }
+  const values = filters[key]
+  return { ...filters, [key]: values.includes(option) ? values.filter((value) => value !== option) : [...values, option] }
 }
 const SORT_COLUMNS =[{ key: 'cardName', label: 'Card' }, ...CARD_METRICS] as const
 const COLUMN_DESCRIPTIONS: Record<SortKey, string> = {
@@ -687,7 +680,7 @@ function GameAnalyticsDashboardInner({ endpoint, title = 'Game analytics', live 
       cardTableRef.current?.scrollIntoView({ block: 'start' })
     }
   }, [])
-  const quickFilterCount = quickFilters.type.length + Number(Boolean(quickFilters.element)) + Number(Boolean(quickFilters.rarity))
+  const quickFilterCount = quickFilters.type.length + quickFilters.element.length + quickFilters.rarity.length
   const minimumCount = Object.values(minimums).filter((value) => minimumSample(value) > 0).length
     + Object.values(minimumValues).filter((value) => minimumMetricValue(value) !== null).length
   const chooseSort = useCallback((key: SortKey) => {
@@ -842,7 +835,7 @@ function GameAnalyticsDashboardInner({ endpoint, title = 'Game analytics', live 
           <p>Samples count player-games. Deck share uses in-deck games; the difference requires both groups to meet the minimum.</p>
         </div>
         {quickFilterCount > 0 ? <div className="game-analytics__active-filters" aria-label="Active card filters">
-          {QUICK_FILTERS.flatMap(({ key, label }) => quickFilterValues(quickFilters, key).map((value) => <button type="button" key={`${key}:${value}`}
+          {QUICK_FILTERS.flatMap(({ key, label }) => quickFilters[key].map((value) => <button type="button" key={`${key}:${value}`}
             aria-label={`Remove ${label.toLowerCase()} filter: ${value}`}
             onClick={() => setQuickFilters((current) => toggleQuickFilter(current, key, value))}>{value} <span aria-hidden="true">×</span></button>))}
         </div> : null}

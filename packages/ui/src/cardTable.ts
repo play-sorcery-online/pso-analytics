@@ -8,7 +8,7 @@ export type MetricKey = 'deckShare' | 'inDeck' | 'played' | 'openingHand' | 'inH
 export type SortKey = 'cardName' | MetricKey
 export type SortDirection = 'ascending' | 'descending'
 export interface CardTableFilters {
-  search: string; type: string | readonly string[]; element: string; rarity: string
+  search: string; type: string | readonly string[]; element: string | readonly string[]; rarity: string | readonly string[]
   minimums: Record<MetricKey, string>
   minimumValues?: Partial<Record<MetricKey, string>>
   /** Card keys from a pasted deck list; only these cards are shown when set. */
@@ -102,12 +102,24 @@ export function indexCardMetadata(cards: readonly CardMetadata[]): Map<string, C
   return result
 }
 
+function filterValues(value: string | readonly string[]): readonly string[] {
+  return typeof value === 'string' ? [value].filter(Boolean) : value
+}
+
+function matchesElementFilter(elements: ReadonlySet<string>, filter: string): boolean {
+  if (filter === 'None') return elements.size === 0
+  if (filter === 'Multi') return elements.size >= 2
+  return elements.has(filter.toLowerCase())
+}
+
 export function selectCardTable(
   cards: readonly CardRow[], catalog: ReadonlyMap<string, CardMetadata>, filters: CardTableFilters,
   sortKey: SortKey, direction: SortDirection, requestedPage = 1,
 ): { cards: CardRow[]; total: number; page: number; pageCount: number; start: number; end: number } {
   const search = cardKey(filters.search)
-  const types = typeof filters.type === 'string' ? [filters.type].filter(Boolean) : filters.type
+  const types = filterValues(filters.type)
+  const rarities = filterValues(filters.rarity)
+  const elementFilters = filterValues(filters.element)
   const minimums = CARD_METRICS.map(({ key }) => ({
     key, count: minimumSample(filters.minimums[key]), value: minimumMetricValue(filters.minimumValues?.[key]),
   }))
@@ -124,12 +136,11 @@ export function selectCardTable(
     })) return false
     const definition = catalog.get(card.cardKey) ?? catalog.get(cardKey(card.cardName))
     if (types.length > 0 && !types.includes(definition?.type ?? '')) return false
-    if (filters.rarity && definition?.rarity !== filters.rarity) return false
-    if (filters.element) {
+    if (rarities.length > 0 && !rarities.includes(definition?.rarity ?? '')) return false
+    if (elementFilters.length > 0) {
       if (!definition) return false
       const elements = new Set(definition.elements.map((element) => element.toLowerCase()).filter((element) => element !== 'none'))
-      if (filters.element === 'None' ? elements.size !== 0
-        : filters.element === 'Multi' ? elements.size < 2 : !elements.has(filters.element.toLowerCase())) return false
+      if (!elementFilters.some((filter) => matchesElementFilter(elements, filter))) return false
     }
     return true
   })
