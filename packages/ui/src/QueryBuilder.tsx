@@ -233,6 +233,7 @@ function QueryBuilderInner({ endpoint, query, gameTypes, personal = false, activ
     {error ? <p role="alert" className="game-analytics__error">{error}</p> : null}
     {result ? <div className="analytics-query__result" role="status">
       {!result.dataAvailable ? <p>Analytics data has not been loaded yet.</p> : result.cohort.playerGames === 0 ? <p>No verifiable matching player-games. Try fewer rules or a wider date range.</p>
+        : result.cohort.playerGames === null ? <p>Fewer than 20 player-games (or 10 matches) match, so the totals are hidden. Try fewer rules or a wider date range.</p>
         : result.cohort.winRate === null ? <p>A win rate is unavailable for this query.</p>
           : <><div><strong className={toneClass(winRateTone(result.cohort.winRate))}>{(result.cohort.winRate * 100).toFixed(1)}%</strong><span>win rate</span></div>
             <p>{result.cohort.playerGames?.toLocaleString()} {result.cohort.playerGames === 1 ? 'player-game' : 'player-games'} and {result.cohort.matches?.toLocaleString()} {result.cohort.matches === 1 ? 'match' : 'matches'}<br />{result.cohort.wins?.toLocaleString()} {result.cohort.wins === 1 ? 'win' : 'wins'} · one observation per player per game</p></>}

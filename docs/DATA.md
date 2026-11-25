@@ -37,4 +37,4 @@ Replays record what players did on a shared table, not a rules engine's log, so 
 
 ## Sample minimums
 
-Card rates need 20 player-games across 10 matches, and are `null` below that. Meta and cohort queries have no minimum, so small samples show up there; the UI says so. A win rate on 30 games swings by about ±18 points by chance alone.
+Card rates need 20 player-games across 10 matches, and are `null` below that. Query (cohort) answers use the same minimum and are `null` below it, except an empty answer, which stays 0. Meta has no minimum, so small samples show up there; the UI says so. A win rate on 30 games swings by about ±18 points by chance alone.
