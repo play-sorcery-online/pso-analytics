@@ -2,7 +2,7 @@
 
 The dashboard reads PSO's public analytics API. The full reference, with every endpoint, its limits and sample answers, is on [playsorceryonline.com/analytics-developers](https://playsorceryonline.com/analytics-developers); this page covers what the dashboard uses.
 
-Everything is counted over all PSO games together. There is no match history, no player lookup, no replay download, and no ranked-only filter.
+Analytics are counted over all PSO games together. The API also serves released match history and players (`/matches`, `/matches/{id}/decks`, `/players/{id}`, see [Match history](#match-history)). There is no replay download and no ranked-only filter.
 
 Base URL: `https://playsorceryonline.com/api/v1`. Send your key in the `x-pso-api-key` header, from a server, a script or the dev proxy, never from code that runs in a browser.
 
@@ -78,3 +78,18 @@ A **rate** is `{ playerGames, matches, wins, winRate }` with `winRate` from 0 to
 ```
 
 Fields: `avatar`, `opponent_avatar`, `deck_card`, `opening_card`, `in_hand_card`, `not_in_hand_card`, `played_card` (names), `went_first` (boolean), `mulligan_count` (0–20), `mulliganed_card` (a card put back in the mulligan; unresolved on games analyzed before it existed). Any condition except `queue_type` can set `"side": "opponent"` to test the other player in the same game instead, so `opening_card` Toolbox AND `opening_card` Toolbox with `side: "opponent"` counts games where both players opened Toolbox (each such game counts as two player-games, one per side). Opponent conditions are unresolved when the other side was not recorded. An opening hand is known whether or not the player mulliganed; `mulligan_count: 0` counts kept hands. `byPlayerTurn` (1–100) is allowed on `played_card` and counts the player's own turns. Groups take `and` or `or` with 1–10 children, at most four levels deep and 25 nodes. `cohort` holds totals only, never single games: a non-empty answer under 20 player-games or 10 matches comes back with every field `null` (an empty answer stays 0). `unresolvedPlayerGames` counts player-games the filter could not decide from the replay evidence; they are not in the rate.
+
+## Match history
+
+Released games only, on the same calendar as analytics. Full shapes are on the docs page.
+
+| Method | Route | Returns |
+| --- | --- | --- |
+| GET | `/matches?after=&format=` | `{ matches, nextCursor, caughtUp }`, oldest first, up to 100 a page. Keep calling with `nextCursor` until `caughtUp`, save the cursor, and continue after the next release |
+| GET | `/matches/{matchId}` | one match |
+| GET | `/matches/{matchId}/decks` | the decks of the match's public players (`404` when none) |
+| GET | `/players/{playerId}` | `{ playerId, name, pictureUrl, profileUrl, summitProfileUrl }` |
+| GET | `/players/{playerId}/matches?after=` | that player's matches, `result` from their side |
+| GET | `/players/{playerId}/summary` | games, wins, streaks, Avatars, colors and opponents, overall and per queue |
+
+A player whose replay of a game is private shows only name, Avatar and result: no `colors`, `wentFirst` or deck. Guests have `playerId: null`.
