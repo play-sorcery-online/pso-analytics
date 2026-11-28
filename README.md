@@ -28,7 +28,7 @@ The sample data comes from PSO's real aggregation code run over made-up games, s
 
 ### Replays
 
-The API has no replay downloads (PSO publishes a weekly file of anonymized sample replays instead; see the API docs page). Match history and decklists of public games are in the API, see [docs/API.md](docs/API.md#match-history). `fixtures/replays/replay_example.json` is a small made-up replay for trying `packages/replay`:
+The API has no replay downloads or match history (PSO publishes a weekly file of anonymized sample replays instead; see the API docs page). `fixtures/replays/replay_example.json` is a small made-up replay for trying `packages/replay`:
 
 ```sh
 npm run example                     # the sample stat over fixtures/replays
